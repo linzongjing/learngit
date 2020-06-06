@@ -1,0 +1,31 @@
+//箱信息 
+WaybillController
+waybillService.findAllBoxNumByWaybill(waybillDTO,false)
+
+SELECT wc.xh, wc.qfh, wb.xxxl, wc.id contid, yd.code, yd.jdsj, yd.czsj,wb.zk,wc.xcrq,wc.zkl,wc.zkl2,wc.xt,
+				(CASE wb.dcr_zk when 0 THEN '无扣货要求' when 1 then '客户暂扣' when 2 then '客户放货'  END ) as dcr_zk,
+				CONVERT(varchar(100), wb.dcrfxrq, 23) as dcrfxrq
+				 FROM VIEW_CONT wc WITH(NOLOCK) 
+				 LEFT JOIN W_VOYCONT wvc WITH(NOLOCK) ON wc.id = wvc.contid  --主键（订单船期箱关系表:主键(voycontID)), w_cont表id(CONTID) , w_voybook表ID(VOYBOOKID)
+				 LEFT JOIN W_VOYBook wvb WITH(NOLOCK) ON wvc.voybookid = wvb.voybookid --主键(VOYBOOKID),运单船期关系表 (w_book表id(BOOKID), w_cqb表id(VOYID))
+				 LEFT JOIN w_book wb WITH(NOLOCK) ON wvb.bookid = wb.id 
+				 LEFT JOIN yw_dt yd WITH(NOLOCK) ON wc.id = yd.contid  --(业务动态表(dtlx : 动态类型 20运单动态 10 箱动态))
+				 WHERE wvb.jfc_flag = '1' 
+				 and wb.dcdhContactFp = '42678832410SHPSH020'
+				 ORDER by wc.xh,yd.jdsj DESC 
+
+// code 对应的值
+INTOPORTSENDCAR(3000, "进口派车"),
+LOADEDCARGOLEAVEYARD(3100, "换车"),
+ENDDELIVERYCARGO(3200, "送达门点"),
+RECEIPTRETURN(3300, "签收单回传"),
+TRANSHIPMENT(3400, "转船"),
+
+//暂扣信息：放【16】箱,放箱完成,200601吴昊
+取w_book的zk(暂扣) + dcr_zk(订舱人暂扣) + dcrfxrq(订舱人放货时间)
+
+
+
+//进口派车  司机：刘兵[南通先锋物流有限公司](电话：18862805335，身份证：320623197111276274)  车牌号：苏F57259
+通过BoxId查询
+SELECT code,jdsj,ms FROM yw_dt WITH (NOLOCK) WHERE contid = '41324010'
