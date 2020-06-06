@@ -3,3 +3,4 @@ git command line add
 git command line diff
 
 有人在develop分支上开发
+别的开发人员开发推送了develop分支上了。
