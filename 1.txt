@@ -1,0 +1,85 @@
+//显示港口动态
+ShipDynamicController
+shipDynamicService.findPortDynamic(portDynamicDTO.getWaybillNum())
+
+//查询运单上所有的 始发港 中转港 目的港  
+select
+sfg,--始发港
+zzg,--中转港
+ZZG2,--中转港2
+ZZG3,--中转港3
+ZZG4,--中转港4
+ZZG5,--中转港5
+ZZG6,--中转港6
+mdg --目的港
+from W_BOOK WITH(NOLOCK) 
+WHERE dcdhContactFp = 'G2004SJDTNT0527' 
+
+ // 根据港口 查询动态表动态 时间
+       SELECT wq.zwcm,wq.hc,wq.cblx,wq.id cqbid,
+			        wb.dcdh, 
+							wvb.zhg,wvb.xhg,
+			 
+			    --预计到港
+        	MAX (CASE WHEN wdt.lx = 0 AND wdt.gk = wvb.xhg THEN 
+					     CASE WHEN wdt.sj IS NULL THEN 
+							 CASE WHEN wdt.psj IS NULL THEN wdt.ssj 
+							 ELSE wdt.psj 
+							 END ELSE wdt.sj 
+							 END END ) yjkbsj,
+					--实际靠泊	 
+       	  MAX (CASE WHEN wdt.lx = 1 AND wdt.gk = wvb.xhg THEN 
+					     CASE WHEN wdt.sj IS NULL THEN 
+							 CASE WHEN wdt.psj IS NULL THEN wdt.ssj 
+							 ELSE wdt.psj 
+							 END ELSE wdt.sj 
+							 END END ) sjkbsj,
+					--实际离港		 
+      	  MAX (CASE	WHEN wdt.lx = 2 AND wdt.gk = wvb.zhg THEN 
+					     CASE WHEN wdt.sj IS NULL THEN 
+							 CASE WHEN wdt.psj IS NULL THEN wdt.ssj 
+							 ELSE wdt.psj 
+							 END ELSE wdt.sj 
+							 END END ) sjlbsj,
+							 
+          MAX (CASE WHEN ( ydt.lx = 0 OR ydt.lx = 20 OR ydt.lx = 50 ) AND ydt.gk = wvb.xhg THEN 
+					     CASE WHEN ydt.ywsj IS NULL THEN 
+							 CASE WHEN ydt.ship_company_sj IS NULL THEN ydt.bsj 
+							 ELSE ydt.ship_company_sj 
+							 END ELSE ydt.ywsj 
+							 END END ) bcyjsj,
+							 
+        	MAX (CASE WHEN ( ydt.lx = 1 OR ydt.lx = 20 OR ydt.lx = 50 ) AND ydt.gk = wvb.xhg THEN 
+					     CASE WHEN ydt.ywsj IS NULL THEN 
+							 CASE WHEN ydt.ship_company_sj IS NULL THEN ydt.bsj 
+							 ELSE ydt.ship_company_sj 
+							 END ELSE ydt.ywsj 
+							 END END ) bckbsj,
+							 
+       	  MAX (CASE WHEN ( ydt.lx = 5 OR ydt.lx = 80 ) AND ydt.gk = wvb.zhg THEN 
+					     CASE WHEN ydt.ywsj IS NULL THEN 
+							 CASE WHEN ydt.ship_company_sj IS NULL THEN ydt.bsj 
+							 ELSE ydt.ship_company_sj 
+							 END ELSE ydt.ywsj 
+							 END END ) bclbsj,
+				
+        	CASE WHEN wb.SFG  = wvb.zhg THEN 1 
+       			  WHEN wb.zzg  = wvb.zhg THEN 2 
+       			  WHEN wb.ZZG2 = wvb.zhg THEN 3
+         		  WHEN wb.ZZG3 = wvb.zhg THEN 4 
+        		  WHEN wb.ZZG4 = wvb.zhg THEN 5 
+        		  WHEN wb.ZZG5 = wvb.zhg THEN 6 
+      		    WHEN wb.ZZG6 = wvb.zhg THEN 7
+       	      END AS noship 
+						 
+       FROM  W_BOOK wb WITH ( NOLOCK )
+       LEFT JOIN W_VOYBook wvb WITH ( NOLOCK ) ON wb.ID = wvb.BOOKID
+       LEFT JOIN W_CQB wq WITH ( NOLOCK ) ON wq.ID = wvb.VOYID  --船期表
+     	 LEFT JOIN W_cq_dt wdt WITH ( NOLOCK ) ON wq.ID = wdt.cqbId --船期动态
+    	 LEFT JOIN yw_bc_dt ydt WITH ( NOLOCK ) ON wq.ID = ydt.cqbId --驳船动态 --动态类型（公共驳船：0预计到港 、1到港报道、2靠泊、3开工、4完工、5离泊    自由驳船：10预计到港、20到港、30开卸、40完卸、50报到、60开装、70完装、80开航 ）
+			 
+       WHERE wb.dcdhContactFp = 'G2004SJDTNT0527' 
+      	AND wq.cblx <> '箱管'
+				
+        GROUP BY wb.SFG,wb.zzg,wb.ZZG2,wb.ZZG3,wb.ZZG4,wb.ZZG5,wb.ZZG6,wq.zwcm,wq.hc,wq.cblx,wb.dcdh,wq.id,wvb.zhg,wvb.xhg
+        ORDER BY noship
